@@ -31,7 +31,7 @@ yt-dlp
 python app.py
 ```
 
-☁️ Running the App on Google Colab
+## ☁️ Running the App on Google Colab
 
 You can run this downloader app directly on Google Colab.  
 Just click the link below to open the notebook:
