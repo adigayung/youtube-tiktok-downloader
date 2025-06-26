@@ -31,6 +31,31 @@ yt-dlp
 python app.py
 ```
 
+☁️ Running the App on Google Colab
+
+You can run this downloader app directly on Google Colab.  
+Just click the link below to open the notebook:
+
+👉 [Open in Colab](https://github.com/adigayung/youtube-tiktok-downloader/blob/main/colab.ipynb)
+
+### 🔐 Ngrok Auth Token Required
+
+To expose your app to the internet (using ngrok), you need an **Ngrok Authtoken**.
+
+#### 🔽 Steps to Get Ngrok Authtoken:
+
+1. Register or log in to Ngrok:  
+   👉 https://dashboard.ngrok.com/signup
+
+2. After logging in, go to your authtoken page:  
+   👉 https://dashboard.ngrok.com/get-started/your-authtoken
+
+3. Copy your token and run the app like this:
+
+```bash
+!python3 app.py --NGROK_AUTH_TOKEN=your_ngrok_api_token_here
+```
+
 ## 📝 Usage
 
 1. Enter one or more YouTube/TikTok video URLs (one per line)
