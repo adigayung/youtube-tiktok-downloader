@@ -11,10 +11,14 @@ Supports batch URL input, optional audio-only (MP3) conversion, and returns a ZI
 - Simple HTML form UI (Bootstrap-ready)
 - Runs locally, no user data saved
 
-## 📦 Requirements
+## 📦 Installation
 
 Install dependencies with:
 ```bash
+python -m venv venv
+venv\Scripts\activate
+git clone https://github.com/adigayung/youtube-tiktok-downloader
+cd youtube-tiktok-downloader
 pip install -r requirements.txt
 ```
 Content of requirements.txt:
