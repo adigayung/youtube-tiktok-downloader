@@ -36,7 +36,7 @@ python app.py
 You can run this downloader app directly on Google Colab.  
 Just click the link below to open the notebook:
 
-👉 [Open in Colab](https://github.com/adigayung/youtube-tiktok-downloader/blob/main/colab.ipynb)
+👉 [![Open In Colab] (https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/adigayung/youtube-tiktok-downloader/blob/main/colab.ipynb)
 
 ### 🔐 Ngrok Auth Token Required
 
