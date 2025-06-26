@@ -3,13 +3,20 @@ import yt_dlp
 import os
 import shutil
 import uuid
+import sys
 
+# ==================== Konfigurasi ====================
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
 
 DOWNLOAD_FOLDER = "downloads"
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
+My_Port = 7534
+debug_mode = False
+NGROK_AUTH_TOKEN = None  # default None
+
+# ==================== Route ====================
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -25,7 +32,6 @@ def index():
             flash("Tidak ada URL valid ditemukan.", "danger")
             return render_template("index.html")
 
-        # Folder unik untuk batch zip
         batch_id = str(uuid.uuid4())
         batch_folder = os.path.join(DOWNLOAD_FOLDER, batch_id)
         os.makedirs(batch_folder, exist_ok=True)
@@ -45,17 +51,9 @@ def index():
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 for url in urls:
-                    # Log tipe URL (opsional)
-                    if "tiktok.com" in url:
-                        print(f"Downloading TikTok: {url}")
-                    elif "youtube.com" in url or "youtu.be" in url:
-                        print(f"Downloading YouTube: {url}")
-                    else:
-                        print(f"Downloading other: {url}")
-
+                    print(f"Downloading: {url}")
                     ydl.download([url])
 
-            # Buat ZIP untuk batch download
             zip_path = os.path.join(DOWNLOAD_FOLDER, f"{batch_id}.zip")
             shutil.make_archive(zip_path.replace(".zip", ""), 'zip', batch_folder)
             return send_file(zip_path, as_attachment=True)
@@ -65,5 +63,22 @@ def index():
 
     return render_template("index.html")
 
+
+# ==================== Main ====================
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Ambil token dari argumen (jika ada)
+    if any("--NGROK_AUTH_TOKEN" in arg for arg in sys.argv):
+        import argparse
+        from pyngrok import ngrok, conf
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--NGROK_AUTH_TOKEN", type=str, default=None)
+        args = parser.parse_args()
+        NGROK_AUTH_TOKEN = args.NGROK_AUTH_TOKEN
+
+        if NGROK_AUTH_TOKEN:
+            conf.get_default().auth_token = NGROK_AUTH_TOKEN
+            public_url = ngrok.connect(My_Port)
+            print("🌐 Public URL:", public_url)
+
+    app.run(host="0.0.0.0", port=My_Port, debug=debug_mode)
