@@ -14,20 +14,18 @@ Supports batch URL input, optional audio-only (MP3) conversion, and returns a ZI
 ## 📦 Requirements
 
 Install dependencies with:
-
+```bash
 pip install -r requirements.txt
-
+```
 Content of requirements.txt:
 
 Flask
 yt-dlp
 
 ## 🚀 Running the App
-
+```bash
 python app.py
-
-Then open in your browser:  
-http://localhost:5000
+```
 
 ## 📝 Usage
 
