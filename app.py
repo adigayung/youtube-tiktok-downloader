@@ -125,6 +125,12 @@ def start_server():
 
     if running_in_colab():
         print("💡 Deteksi: Anda menjalankan kode di Google Colab. pywebview tidak dijalankan.")
+        import time
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("⛔ Dihentikan oleh user")
     else:
         if webview is not None:
             webview.create_window("🎧 Batch YouTube & Tiktok Downloader", f"http://127.0.0.1:{My_Port}/")
