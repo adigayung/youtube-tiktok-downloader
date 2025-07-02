@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Log Download</title>
+</head>
+<body>
+    <h2>Proses Download</h2>
+    <pre id="log-container" style="background: #000; color: #0f0; padding: 10px; height: 80vh; overflow-y: scroll;"></pre>
+
+    <script>
+        const logEl = document.getElementById("log-container");
+        const evtSource = new EventSource("/log_stream");
+        evtSource.onmessage = function(e) {
+            logEl.textContent += e.data + "\n";
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+    </script>
+</body>
+</html>
