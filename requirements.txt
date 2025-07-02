@@ -1,3 +1,4 @@
 Flask
 pyngrok
 yt-dlp
+pywebview
