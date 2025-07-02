@@ -16,6 +16,7 @@ except ImportError:
 # ==================== Konfigurasi ====================
 app = Flask(__name__)
 log_queue = queue.Queue()
+PUBLIC_URL = None
 app.secret_key = "super_secret_key"
 
 DOWNLOAD_FOLDER = "downloads"
@@ -60,13 +61,29 @@ def thread_download(urls, sound_only, batch_id):
                 ydl.download([url])
 
         zip_path = os.path.join(DOWNLOAD_FOLDER, f"{batch_id}.zip")
+        file_name = f"{batch_id}.zip"
         shutil.make_archive(zip_path.replace(".zip", ""), 'zip', batch_folder)
-        log_print(f"✅ Selesai. File ZIP: {zip_path}")
+        
+        if running_in_colab() and PUBLIC_URL:
+            url_base = PUBLIC_URL
+        else:
+            url_base = f"http://127.0.0.1:{My_Port}"
+        download_url = f"{url_base}/download/{file_name}"
+        log_print(f"🔗 <a href='{download_url}' download>{download_url}</a>")
+        log_print(f"✅ Selesai.")
 
     except Exception as e:
         log_print(f"❌ Error: {str(e)}")
 
 # ==================== Route ====================
+@app.route("/download/<path:filename>")
+def download_file(filename):
+    file_path = os.path.join(DOWNLOAD_FOLDER, filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return "File tidak ditemukan.", 404
+        
 @app.route("/log_stream")
 def log_stream():
     def generate():
@@ -115,10 +132,11 @@ def start_server():
         NGROK_AUTH_TOKEN = args.NGROK_AUTH_TOKEN
 
         if NGROK_AUTH_TOKEN:
+            global PUBLIC_URL
             conf.get_default().auth_token = NGROK_AUTH_TOKEN
-            public_url = ngrok.connect(My_Port)
-            print("🌐 Public URL:", public_url)
-
+            PUBLIC_URL = str(ngrok.connect(My_Port))
+            print("🌐 Public URL:", PUBLIC_URL)
+            
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.daemon = True
     flask_thread.start()

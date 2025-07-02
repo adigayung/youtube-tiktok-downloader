@@ -1,19 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Log Download</title>
+  <meta charset="UTF-8">
+  <title>Log Download</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #eeeeee;
+      font-family: monospace;
+      padding: 20px;
+    }
+    #log {
+      white-space: pre-wrap;
+    }
+    a {
+      color: #4FC3F7;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .log-line {
+      margin: 5px 0;
+    }
+  </style>
 </head>
 <body>
-    <h2>Proses Download</h2>
-    <pre id="log-container" style="background: #000; color: #0f0; padding: 10px; height: 80vh; overflow-y: scroll;"></pre>
+  <h2>📥 Proses Download</h2>
+  <div id="log"></div>
 
-    <script>
-        const logEl = document.getElementById("log-container");
-        const evtSource = new EventSource("/log_stream");
-        evtSource.onmessage = function(e) {
-            logEl.textContent += e.data + "\n";
-            logEl.scrollTop = logEl.scrollHeight;
-        };
-    </script>
+  <script>
+    const logDiv = document.getElementById("log");
+    const source = new EventSource("/log_stream");
+
+    source.onmessage = function(event) {
+      const line = event.data;
+
+      const p = document.createElement("div");
+      p.classList.add("log-line");
+      p.innerHTML = line;  // ⬅️ HTML agar <a> aktif
+      logDiv.appendChild(p);
+
+      // Tambahkan event agar bisa klik link di pywebview
+      const links = p.querySelectorAll("a");
+      links.forEach(link => {
+        link.addEventListener("click", function(e) {
+          e.preventDefault();
+          window.location.href = link.href;  // buka langsung di jendela sekarang
+        });
+      });
+
+      window.scrollTo(0, document.body.scrollHeight);
+    };
+  </script>
 </body>
 </html>
