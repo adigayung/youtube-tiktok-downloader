@@ -6,6 +6,7 @@ import os
 import shutil
 import uuid
 import sys
+import time
 
 # Optional: only import pywebview if not in Colab
 try:
@@ -39,6 +40,13 @@ def log_print(text):
     print(text)
     log_queue.put(text)
 
+def format_size(bytes):
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if bytes < 1024.0:
+            return f"{bytes:.2f} {unit}"
+        bytes /= 1024.0
+    return f"{bytes:.2f} TB"
+
 def thread_download(urls, sound_only, batch_id):
     batch_folder = os.path.join(DOWNLOAD_FOLDER, batch_id)
     os.makedirs(batch_folder, exist_ok=True)
@@ -46,6 +54,8 @@ def thread_download(urls, sound_only, batch_id):
     ydl_opts = {
         'outtmpl': os.path.join(batch_folder, '%(title)s.%(ext)s'),
         'format': 'bestaudio/best' if sound_only else 'bestvideo+bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
     }
 
     if sound_only:
@@ -55,26 +65,57 @@ def thread_download(urls, sound_only, batch_id):
             'preferredquality': '192',
         }]
 
+    total_videos = len(urls)
+    downloaded_bytes = 0
+    start_time = time.time()
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            for url in urls:
-                log_print(f"🔗 Downloading: {url}")
+            for idx, url in enumerate(urls, start=1):
+                log_print(f"\n📥 [{idx}/{total_videos}] Downloading: {url}")
+
+                file_before = set(os.listdir(batch_folder))
+                download_start = time.time()
                 ydl.download([url])
+                download_end = time.time()
+
+                file_after = set(os.listdir(batch_folder))
+                new_files = file_after - file_before
+                new_bytes = 0
+                for f in new_files:
+                    path = os.path.join(batch_folder, f)
+                    if os.path.isfile(path):
+                        new_bytes += os.path.getsize(path)
+
+                downloaded_bytes += new_bytes
+
+                elapsed = time.time() - start_time
+                avg_time = elapsed / idx
+                eta = (total_videos - idx) * avg_time
+
+                log_print(
+                    f"✅ Done {idx}/{total_videos} | ETA: {eta:.1f}s | Total: {format_size(downloaded_bytes)} | Time: {download_end - download_start:.1f}s"
+                )
 
         zip_path = os.path.join(DOWNLOAD_FOLDER, f"{batch_id}.zip")
         file_name = f"{batch_id}.zip"
         shutil.make_archive(zip_path.replace(".zip", ""), 'zip', batch_folder)
-        
+
         if running_in_colab() and PUBLIC_URL:
             url_base = PUBLIC_URL
         else:
             url_base = f"http://127.0.0.1:{My_Port}"
         download_url = f"{url_base}/download/{file_name}"
+
+        total_time = time.time() - start_time
+        log_print(f"\n📦 Archive created: {file_name}")
+        log_print(f"🕒 Total time: {total_time:.2f} seconds")
+        log_print(f"📎 File size: {format_size(os.path.getsize(zip_path))}")
         log_print(f"🔗 <a href='{download_url}' download>{download_url}</a>")
-        log_print(f"✅ Selesai.")
+        log_print(f"✅ Semua download selesai.")
 
     except Exception as e:
-        log_print(f"❌ Error: {str(e)}")
+        log_print(f"❌ Error saat download: {str(e)}")
 
 # ==================== Route ====================
 @app.route("/download/<path:filename>")
@@ -84,7 +125,7 @@ def download_file(filename):
         return send_file(file_path, as_attachment=True)
     else:
         return "File tidak ditemukan.", 404
-        
+
 @app.route("/log_stream")
 def log_stream():
     def generate():
@@ -122,7 +163,6 @@ def run_flask():
 def start_server():
     global NGROK_AUTH_TOKEN
 
-    # Ambil token dari argumen (jika ada)
     if any("--NGROK_AUTH_TOKEN" in arg for arg in sys.argv):
         import argparse
         from pyngrok import ngrok, conf
@@ -137,23 +177,21 @@ def start_server():
             conf.get_default().auth_token = NGROK_AUTH_TOKEN
             PUBLIC_URL = str(ngrok.connect(My_Port))
             print("🌐 Public URL:", PUBLIC_URL)
-            
+
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.daemon = True
     flask_thread.start()
 
-    if not OPEN_WEBVIEW: # jika false
+    if not OPEN_WEBVIEW:
         print("💡 Deteksi: Anda menjalankan kode di Google Colab. pywebview tidak dijalankan.")
-        import time
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
             print("⛔ Dihentikan oleh user")
-    else: # jika true
+    else:
         if running_in_colab():
             print("💡 Deteksi: Anda menjalankan kode di Google Colab. pywebview tidak dijalankan.")
-            import time
             try:
                 while True:
                     time.sleep(1)
